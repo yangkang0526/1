@@ -1,25 +1,17 @@
-name: Deploy
+name: Deploy Static Site
 
 on:
   push:
     branches: [ main ]
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
-    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-      
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
+    - uses: actions/checkout@v3
+    - name: Setup Pages
+      uses: actions/configure-pages@v2
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v1
       with:
-        node-version: '18'
-        
-    - name: Install dependencies
-      run: npm install
-      # 确保这一步在正确的目录运行
-      
-    - name: Build
-      run: npm run build
+        path: '.'
