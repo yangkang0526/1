@@ -1,10 +1,586 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-    <title>测试页面</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>作业抽奖点名系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #ff4b4b;
+            --secondary: #0068c9;
+            --success: #00cc96;
+            --warning: #ffa700;
+            --info: #83c9ff;
+            --light: #f0f2f6;
+            --dark: #262730;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: var(--dark);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header .subtitle {
+            font-size: 1.2em;
+            opacity: 0.8;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            min-height: 600px;
+        }
+        
+        .sidebar {
+            background: var(--light);
+            padding: 25px;
+            border-right: 2px solid #e0e0e0;
+        }
+        
+        .content {
+            padding: 25px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border: 1px solid #e0e0e0;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--secondary);
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #ff3333;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .student-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .student-item {
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: white;
+        }
+        
+        .student-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .student-name {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        .student-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            font-size: 0.9em;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 8px;
+            background: var(--light);
+            border-radius: 5px;
+        }
+        
+        .lottery-result {
+            text-align: center;
+            padding: 30px;
+        }
+        
+        .winner-name {
+            font-size: 2.5em;
+            color: var(--primary);
+            font-weight: bold;
+            margin: 20px 0;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .metric-card {
+            background: var(--light);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--secondary);
+        }
+        
+        .metric-label {
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: var(--primary);
+            animation: confetti-fall 5s linear forwards;
+        }
+        
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            background: var(--light);
+            color: #666;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .content {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                border-right: none;
+                border-bottom: 2px solid #e0e0e0;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1>测试成功！</h1>
-    <p>如果看到这个页面，说明 GitHub Pages 工作正常。</p>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 作业抽奖点名系统</h1>
+            <div class="subtitle">基于完成率和准确率的智能抽奖系统</div>
+        </div>
+        
+        <div class="main-content">
+            <div class="sidebar">
+                <h2>添加学生数据</h2>
+                <div class="card">
+                    <div class="form-group">
+                        <label for="studentName">学生姓名</label>
+                        <input type="text" id="studentName" placeholder="请输入学生姓名">
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="form-group">
+                            <label for="completed">已完成题目</label>
+                            <input type="number" id="completed" min="0" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="total">总题目数</label>
+                            <input type="number" id="total" min="1" value="20">
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="form-group">
+                            <label for="correct">做对题目</label>
+                            <input type="number" id="correct" min="0" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="correctTotal">正确总数</label>
+                            <input type="number" id="correctTotal" min="1" value="20">
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="addStudent()" style="width: 100%; margin-top: 15px;">
+                        添加/更新学生
+                    </button>
+                    
+                    <button class="btn btn-danger" onclick="clearAllData()" style="width: 100%; margin-top: 10px;">
+                        清空所有数据
+                    </button>
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <h3>系统说明</h3>
+                    <p style="font-size: 0.9em; color: #666; line-height: 1.5;">
+                        🎯 抽奖规则：完成率和准确率越低的学生，被抽中的概率越高。
+                        系统会自动计算每个学生的权重，确保公平性。
+                    </p>
+                </div>
+            </div>
+            
+            <div class="content">
+                <div class="card">
+                    <h2>学生列表</h2>
+                    <div id="studentList" class="student-list">
+                        <!-- 学生列表将在这里动态生成 -->
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h2>抽奖功能</h2>
+                    <div id="lotterySection">
+                        <button class="btn btn-primary" onclick="startLottery()" style="width: 100%; padding: 20px; font-size: 1.2em;">
+                            🎲 开始抽奖
+                        </button>
+                        
+                        <div id="lotteryResult" class="lottery-result" style="display: none;">
+                            <div class="winner-name" id="winnerName"></div>
+                            
+                            <div class="metrics">
+                                <div class="metric-card">
+                                    <div class="metric-value" id="completionRate">0%</div>
+                                    <div class="metric-label">作业完成率</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value" id="accuracyRate">0%</div>
+                                    <div class="metric-label">题目准确率</div>
+                                </div>
+                            </div>
+                            
+                            <div class="metric-card">
+                                <div class="metric-value" id="weightValue">0</div>
+                                <div class="metric-label">抽中权重</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>💡 提示：系统使用浏览器本地存储，刷新页面不会丢失数据</p>
+        </div>
+    </div>
+
+    <script>
+        // 学生数据管理
+        let studentsData = JSON.parse(localStorage.getItem('studentsData')) || {};
+        
+        // 创建示例数据（首次使用）
+        if (Object.keys(studentsData).length === 0) {
+            studentsData = {
+                "张三": { completed: 15, total: 20, correct: 12, correctTotal: 20 },
+                "李四": { completed: 18, total: 20, correct: 16, correctTotal: 20 },
+                "王五": { completed: 10, total: 20, correct: 8, correctTotal: 20 },
+                "赵六": { completed: 8, total: 20, correct: 6, correctTotal: 20 },
+                "钱七": { completed: 5, total: 20, correct: 3, correctTotal: 20 }
+            };
+            saveData();
+        }
+        
+        // 保存数据到本地存储
+        function saveData() {
+            localStorage.setItem('studentsData', JSON.stringify(studentsData));
+        }
+        
+        // 计算概率权重
+        function calculateProbability(completionRate, accuracyRate) {
+            const overallPerformance = (completionRate + accuracyRate) / 2;
+            return Math.pow(100 - overallPerformance, 2);
+        }
+        
+        // 添加学生
+        function addStudent() {
+            const name = document.getElementById('studentName').value.trim();
+            const completed = parseInt(document.getElementById('completed').value);
+            const total = parseInt(document.getElementById('total').value);
+            const correct = parseInt(document.getElementById('correct').value);
+            const correctTotal = parseInt(document.getElementById('correctTotal').value);
+            
+            if (!name) {
+                alert('请输入学生姓名');
+                return;
+            }
+            
+            if (completed > total) {
+                alert('完成数不能大于总数');
+                return;
+            }
+            
+            if (correct > correctTotal) {
+                alert('正确数不能大于正确总数');
+                return;
+            }
+            
+            studentsData[name] = {
+                completed: completed,
+                total: total,
+                correct: correct,
+                correctTotal: correctTotal
+            };
+            
+            saveData();
+            updateStudentList();
+            
+            // 清空表单
+            document.getElementById('studentName').value = '';
+            document.getElementById('completed').value = '0';
+            document.getElementById('correct').value = '0';
+            
+            alert(`成功添加学生: ${name}`);
+        }
+        
+        // 清空所有数据
+        function clearAllData() {
+            if (confirm('确定要清空所有学生数据吗？')) {
+                studentsData = {};
+                saveData();
+                updateStudentList();
+                document.getElementById('lotteryResult').style.display = 'none';
+            }
+        }
+        
+        // 更新学生列表显示
+        function updateStudentList() {
+            const studentList = document.getElementById('studentList');
+            studentList.innerHTML = '';
+            
+            if (Object.keys(studentsData).length === 0) {
+                studentList.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">暂无学生数据</p>';
+                return;
+            }
+            
+            Object.keys(studentsData).forEach(name => {
+                const student = studentsData[name];
+                const completionRate = (student.completed / student.total * 100).toFixed(1);
+                const accuracyRate = (student.correct / student.correctTotal * 100).toFixed(1);
+                const weight = calculateProbability(parseFloat(completionRate), parseFloat(accuracyRate));
+                
+                const studentItem = document.createElement('div');
+                studentItem.className = 'student-item';
+                studentItem.innerHTML = `
+                    <div class="student-header">
+                        <div class="student-name">${name}</div>
+                        <div style="color: #666; font-size: 0.9em;">权重: ${weight.toFixed(0)}</div>
+                    </div>
+                    <div class="student-stats">
+                        <div class="stat-item">
+                            <div>完成率</div>
+                            <div style="font-weight: bold; color: var(--secondary);">${completionRate}%</div>
+                            <div style="font-size: 0.8em;">${student.completed}/${student.total}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div>准确率</div>
+                            <div style="font-weight: bold; color: var(--success);">${accuracyRate}%</div>
+                            <div style="font-size: 0.8em;">${student.correct}/${student.correctTotal}</div>
+                        </div>
+                    </div>
+                    <button onclick="deleteStudent('${name}')" style="margin-top: 10px; padding: 5px 10px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; width: 100%;">
+                        删除
+                    </button>
+                `;
+                studentList.appendChild(studentItem);
+            });
+        }
+        
+        // 删除学生
+        function deleteStudent(name) {
+            if (confirm(`确定要删除学生 "${name}" 吗？`)) {
+                delete studentsData[name];
+                saveData();
+                updateStudentList();
+            }
+        }
+        
+        // 开始抽奖
+        function startLottery() {
+            const names = Object.keys(studentsData);
+            if (names.length === 0) {
+                alert('请先添加学生数据');
+                return;
+            }
+            
+            // 计算权重
+            const weights = names.map(name => {
+                const student = studentsData[name];
+                const completionRate = (student.completed / student.total * 100);
+                const accuracyRate = (student.correct / student.correctTotal * 100);
+                return calculateProbability(completionRate, accuracyRate);
+            });
+            
+            // 抽奖动画
+            let count = 0;
+            const maxCount = 30;
+            const interval = setInterval(() => {
+                const randomIndex = Math.floor(Math.random() * names.length);
+                document.getElementById('winnerName').textContent = names[randomIndex];
+                count++;
+                
+                if (count >= maxCount) {
+                    clearInterval(interval);
+                    
+                    // 最终结果
+                    const totalWeight = weights.reduce((a, b) => a + b, 0);
+                    let random = Math.random() * totalWeight;
+                    let selectedIndex = 0;
+                    
+                    for (let i = 0; i < weights.length; i++) {
+                        random -= weights[i];
+                        if (random <= 0) {
+                            selectedIndex = i;
+                            break;
+                        }
+                    }
+                    
+                    const winnerName = names[selectedIndex];
+                    const winnerData = studentsData[winnerName];
+                    const completionRate = (winnerData.completed / winnerData.total * 100).toFixed(1);
+                    const accuracyRate = (winnerData.correct / winnerData.correctTotal * 100).toFixed(1);
+                    const weight = calculateProbability(parseFloat(completionRate), parseFloat(accuracyRate));
+                    
+                    // 显示结果
+                    setTimeout(() => {
+                        document.getElementById('winnerName').textContent = winnerName;
+                        document.getElementById('completionRate').textContent = `${completionRate}%`;
+                        document.getElementById('accuracyRate').textContent = `${accuracyRate}%`;
+                        document.getElementById('weightValue').textContent = weight.toFixed(0);
+                        document.getElementById('lotteryResult').style.display = 'block';
+                        
+                        // 创建彩色纸屑效果
+                        createConfetti();
+                    }, 500);
+                }
+            }, 100);
+        }
+        
+        // 创建彩色纸屑效果
+        function createConfetti() {
+            const colors = ['#ff4b4b', '#0068c9', '#00cc96', '#ffa700', '#83c9ff'];
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDelay = Math.random() * 5 + 's';
+                document.body.appendChild(confetti);
+                
+                setTimeout(() => {
+                    confetti.remove();
+                }, 5000);
+            }
+        }
+        
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStudentList();
+        });
+    </script>
 </body>
 </html>
