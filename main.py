@@ -24,6 +24,10 @@ class HomeworkLotterySystem:
         self.security_manager = SecurityManager()
         if 'students_data' not in st.session_state:
             st.session_state.students_data = self.create_sample_data()
+        
+        # 初始化抽奖结果状态
+        if 'lottery_result' not in st.session_state:
+            st.session_state.lottery_result = None
 
     def create_sample_data(self):
         sample_data = [
@@ -122,6 +126,8 @@ def main():
                             'correct_total': correct_total
                         }
                         st.success(f"成功添加学生: {name}")
+                        # 清空抽奖结果，因为数据已更新
+                        st.session_state.lottery_result = None
                     else:
                         st.error("完成数/正确数不能大于总数")
                 else:
@@ -129,6 +135,7 @@ def main():
 
         if st.button("清空所有数据", type="secondary"):
             st.session_state.students_data = {}
+            st.session_state.lottery_result = None
             st.rerun()
 
     # 主内容区
@@ -160,32 +167,44 @@ def main():
         st.header("抽奖功能")
 
         if st.session_state.students_data:
+            # 抽奖按钮
             if st.button("🎲 开始抽奖", type="primary", use_container_width=True):
                 selected_name, student_data, probability = system.draw_lottery()
+                st.session_state.lottery_result = {
+                    'name': selected_name,
+                    'data': student_data,
+                    'probability': probability
+                }
+                st.rerun()
 
-                if selected_name:
-                    st.balloons()
-                    st.success(f"🎉 被抽中的学生是：**{selected_name}**")
+            # 显示抽奖结果
+            if st.session_state.lottery_result:
+                result = st.session_state.lottery_result
+                
+                # 显示动画效果
+                st.balloons()
+                
+                st.success(f"🎉 被抽中的学生是：**{result['name']}**")
 
-                    col_a, col_b = st.columns(2)
-                    with col_a:
-                        st.metric(
-                            "作业完成",
-                            f"{student_data['completed']}/{student_data['total']}题",
-                            f"{student_data['completion_rate']:.1f}%"
-                        )
-                    with col_b:
-                        st.metric(
-                            "题目正确",
-                            f"{student_data['correct']}/{student_data['correct_total']}题",
-                            f"{student_data['accuracy_rate']:.1f}%"
-                        )
+                col_a, col_b = st.columns(2)
+                with col_a:
+                    st.metric(
+                        "作业完成",
+                        f"{result['data']['completed']}/{result['data']['total']}题",
+                        f"{result['data']['completion_rate']:.1f}%"
+                    )
+                with col_b:
+                    st.metric(
+                        "题目正确",
+                        f"{result['data']['correct']}/{result['data']['correct_total']}题",
+                        f"{result['data']['accuracy_rate']:.1f}%"
+                    )
 
-                    st.info(f"📈 抽中权重: {probability:.2f}")
+                st.info(f"📈 抽中权重: {result['probability']:.2f}")
 
-                    # 显示概率说明
-                    st.markdown("---")
-                    st.caption("🎯 抽奖规则：完成率和准确率越低的学生，被抽中的概率越高")
+                # 显示概率说明
+                st.markdown("---")
+                st.caption("🎯 抽奖规则：完成率和准确率越低的学生，被抽中的概率越高")
         else:
             st.warning("请先添加学生数据")
 
