@@ -5,6 +5,7 @@ import hashlib
 import hmac
 from datetime import datetime
 import pandas as pd
+import time
 
 
 class SecurityManager:
@@ -28,6 +29,8 @@ class HomeworkLotterySystem:
         # 初始化抽奖结果状态
         if 'lottery_result' not in st.session_state:
             st.session_state.lottery_result = None
+        if 'show_animation' not in st.session_state:
+            st.session_state.show_animation = False
 
     def create_sample_data(self):
         sample_data = [
@@ -85,6 +88,33 @@ class HomeworkLotterySystem:
         return selected_name, student_data, probability
 
 
+def show_custom_animation():
+    """显示自定义动画效果"""
+    st.markdown("""
+    <style>
+    @keyframes celebrate {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.2); }
+        100% { transform: scale(1); }
+    }
+    .celebrate {
+        animation: celebrate 0.5s ease-in-out 3;
+        display: inline-block;
+    }
+    .confetti {
+        position: fixed;
+        width: 10px;
+        height: 10px;
+        background: #ff0000;
+        animation: fall 5s linear infinite;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # 显示庆祝效果的文本
+    st.markdown('<div class="celebrate">🎉</div>', unsafe_allow_html=True)
+
+
 def main():
     st.set_page_config(
         page_title="作业抽奖点名系统",
@@ -128,6 +158,7 @@ def main():
                         st.success(f"成功添加学生: {name}")
                         # 清空抽奖结果，因为数据已更新
                         st.session_state.lottery_result = None
+                        st.session_state.show_animation = False
                     else:
                         st.error("完成数/正确数不能大于总数")
                 else:
@@ -136,6 +167,7 @@ def main():
         if st.button("清空所有数据", type="secondary"):
             st.session_state.students_data = {}
             st.session_state.lottery_result = None
+            st.session_state.show_animation = False
             st.rerun()
 
     # 主内容区
@@ -169,6 +201,9 @@ def main():
         if st.session_state.students_data:
             # 抽奖按钮
             if st.button("🎲 开始抽奖", type="primary", use_container_width=True):
+                # 设置显示动画标志
+                st.session_state.show_animation = True
+                # 执行抽奖
                 selected_name, student_data, probability = system.draw_lottery()
                 st.session_state.lottery_result = {
                     'name': selected_name,
@@ -182,7 +217,13 @@ def main():
                 result = st.session_state.lottery_result
                 
                 # 显示动画效果
-                st.balloons()
+                if st.session_state.show_animation:
+                    # 使用自定义动画
+                    show_custom_animation()
+                    # 同时使用Streamlit内置动画
+                    st.balloons()
+                    # 重置动画标志，避免重复播放
+                    st.session_state.show_animation = False
                 
                 st.success(f"🎉 被抽中的学生是：**{result['name']}**")
 
